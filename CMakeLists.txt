@@ -111,36 +111,79 @@ add_feature(CorridorFeature Corridor)
 # renderer, and a display, so they are opt-out: Linux/headless CI configures with
 # -DPHYSICS_BUILD_APPS=OFF and still builds + tests the whole portable core.
 option(PHYSICS_BUILD_APPS "Build the windowed demo apps (needs SDL3 + a GPU backend)" ON)
+# Release toggle: build + link the third-party deps (SDL3, and zlib on Windows)
+# statically from source, for self-contained demo binaries. Dev/CI leaves it OFF
+# and resolves SDL3 system-first (brew/apt), matching the reference project.
+option(PHYSICS_STATIC_DEPS "Build third-party deps from source and link them statically (release binaries)" OFF)
 
 if(PHYSICS_BUILD_APPS)
-  # SDL3 for windowing + input. Resolved system-first (brew/vcpkg), falling back
-  # to a pinned source build so a fresh checkout still builds anywhere.
-  find_package(SDL3 QUIET)
-  if(NOT SDL3_FOUND)
-    message(STATUS "SDL3: building from source")
-    include(FetchContent)
+  include(FetchContent)
+
+  # --- SDL3 (window + input) --------------------------------------------------
+  if(PHYSICS_STATIC_DEPS)
+    message(STATUS "SDL3: building from source (static)")
     FetchContent_Declare(SDL3
       GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
       GIT_TAG release-3.2.10
       GIT_SHALLOW TRUE)
     set(SDL_TEST OFF CACHE BOOL "" FORCE)
     set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+    set(SDL_STATIC ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(SDL3)
+    set(SDL3_LINK_TARGET SDL3::SDL3-static)
   else()
-    message(STATUS "SDL3: using system package")
+    find_package(SDL3 QUIET)
+    if(NOT SDL3_FOUND)
+      message(STATUS "SDL3: building from source (shared)")
+      FetchContent_Declare(SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG release-3.2.10
+        GIT_SHALLOW TRUE)
+      set(SDL_TEST OFF CACHE BOOL "" FORCE)
+      set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+      FetchContent_MakeAvailable(SDL3)
+    else()
+      message(STATUS "SDL3: using system package")
+    endif()
+    set(SDL3_LINK_TARGET SDL3::SDL3)
   endif()
 
   find_package(OpenGL REQUIRED)
 
+  # --- GLAD (OpenGL 4.1 core function loader), vendored, every platform --------
+  # The GL backend loads entry points through GLAD on all platforms (macOS too),
+  # so there is one tested GL code path. Plain C, confined to its own library.
+  add_library(glad STATIC third_party/glad/src/gl.c)
+  target_include_directories(glad PUBLIC third_party/glad/include)
+
+  # --- zlib (PNG capture / screenshots) ---------------------------------------
+  # macOS and Linux ship a ubiquitous system zlib (link it dynamically, as the
+  # reference project does for such libs); Windows has none, so build it here.
+  if(WIN32)
+    FetchContent_Declare(zlib
+      GIT_REPOSITORY https://github.com/madler/zlib.git
+      GIT_TAG v1.3.1
+      GIT_SHALLOW TRUE)
+    set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(zlib)
+    set(ZLIB_LINK_TARGET zlibstatic)
+  else()
+    set(ZLIB_LINK_TARGET z)
+  endif()
+
   # RenderBackend: the abstract renderer interface + its OpenGL implementation.
   # A plain (non-module) library so it can share one interface with the Metal
-  # backend; GL headers are confined to its .cpp.
+  # backend; GL / SDL headers are confined to its .cpp files.
   add_library(RenderBackend STATIC
     src/Render/RenderMath.cpp
     src/Render/GLRenderer.cpp
     src/Render/RenderBackendFactory.cpp)
   target_include_directories(RenderBackend PUBLIC src/Render)
-  target_link_libraries(RenderBackend PUBLIC OpenGL::GL z SDL3::SDL3) # z: PNG capture; SDL: window/present
+  if(WIN32)
+    target_include_directories(RenderBackend PRIVATE ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
+  endif()
+  target_link_libraries(RenderBackend PUBLIC OpenGL::GL glad ${ZLIB_LINK_TARGET} ${SDL3_LINK_TARGET})
 
   # SceneView: draws a Sim::State through the abstract RenderBackend.
   add_module_library(SceneView src/SceneView/SceneView.cppm)
@@ -170,7 +213,7 @@ if(PHYSICS_BUILD_APPS)
     set_target_properties(${exe} PROPERTIES CXX_MODULE_STD ON)
     target_link_libraries(${exe} PRIVATE
       ${feature} ComposableArchitecture Dependencies PhysicsEngine Simulation
-      RenderBackend SceneView SDL3::SDL3)
+      RenderBackend SceneView ${SDL3_LINK_TARGET})
   endfunction()
 
   add_demo_app(sandbox   SandboxApp.cpp   SandboxFeature)

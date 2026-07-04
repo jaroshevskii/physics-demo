@@ -35,7 +35,7 @@
     {
       "name": "windows",
       "displayName": "Windows — MSVC (portable core, headless)",
-      "description": "Builds and tests the portable core on MSVC (C++23 + import std). PHYSICS_BUILD_APPS=OFF: the windowed demos are macOS-only (the GL backend has no loader, Metal is Apple-only), so Windows builds the rendering-free engine. Run from a VS developer environment so cl/Ninja are on PATH.",
+      "description": "Builds and tests the portable core on MSVC (C++23 + import std). PHYSICS_BUILD_APPS=OFF for a fast headless per-push check; the windowed demos build on Windows too (vendored GLAD loader) and are produced by the Release workflow with -DPHYSICS_BUILD_APPS=ON -DPHYSICS_STATIC_DEPS=ON. Run from a VS developer environment so cl/Ninja are on PATH.",
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",

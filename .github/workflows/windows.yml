@@ -31,10 +31,11 @@ jobs:
 
       # The `windows` preset builds the portable, rendering-free core
       # (PHYSICS_BUILD_APPS=OFF) on MSVC at C++23 + import std. The core has no
-      # external dependencies (pure std), so no vcpkg is needed. The windowed
-      # demos are macOS-only (the OpenGL backend has no GLAD/GLEW loader, and
-      # Metal is Apple-only), so Windows validates the engine + architecture +
-      # feature reducers and runs every test — the same scope as the Linux job.
+      # external dependencies (pure std), so no vcpkg is needed. This per-push job
+      # validates the engine + architecture + feature reducers and runs every test
+      # on MSVC — the same fast, headless scope as the Linux job. (The windowed
+      # demos DO build on Windows via the vendored GLAD loader; they are built and
+      # packaged by the Release workflow, which links SDL3 statically.)
       - name: Configure / Build / Test
         shell: cmd
         run: |

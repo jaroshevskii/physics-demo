@@ -1,14 +1,12 @@
 name: Release
 
-# Builds optimized artifacts for each platform and attaches them to the GitHub
-# Release. The windowed demos only build on macOS (the OpenGL backend has no
-# GLAD/GLEW loader and Metal is Apple-only), so:
-#   * macOS   ships the runnable demo executables (Release, Metal + OpenGL);
-#   * Linux   builds the portable core (Release) and ships the reusable engine
-#             as a drop-in source bundle (tar.gz);
-#   * Windows builds the portable core (Release, MSVC) and ships the same engine
-#             bundle (zip).
-# Every platform produces an artifact, honest about what each can build.
+# Builds self-contained demo binaries for every platform and attaches them to
+# the GitHub Release. Release builds set PHYSICS_STATIC_DEPS=ON, so SDL3 (and
+# zlib on Windows) are built from source and linked STATICALLY — no SDL3 runtime
+# to ship alongside the executables. The OpenGL backend loads through a vendored
+# GLAD loader, so the demos build and run on all three platforms; macOS also gets
+# the Metal backend. (Ubiquitous system libs — libGL/opengl32, libz on Unix, and
+# the C++ runtime — stay dynamic, as in the reference project.)
 
 on:
   release:
@@ -26,9 +24,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: macOS, runner: macos-latest }
-          - { name: Linux, runner: ubuntu-latest }
-          - { name: Windows, runner: windows-latest }
+          - { name: macOS, runner: macos-latest, archive: physics-demo-macos-arm64.tar.gz }
+          - { name: Linux, runner: ubuntu-latest, archive: physics-demo-linux-x86_64.tar.gz }
+          - { name: Windows, runner: windows-latest, archive: physics-demo-windows-x86_64.zip }
 
     steps:
       - uses: actions/checkout@v7
@@ -39,57 +37,38 @@ jobs:
           cmakeVersion: "4.2.3"
           ninjaVersion: "latest"
 
-      # --- toolchains ---------------------------------------------------------
-      - name: Install LLVM + SDL3 (macOS)
+      # --- toolchains + build deps (SDL3 is built from source, so only its
+      #     system build prerequisites are needed) --------------------------------
+      - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
-        run: brew install llvm sdl3
+        run: brew install llvm
 
-      - name: Install LLVM + libc++ (Linux)
+      - name: Install LLVM + libc++ + windowing dev libs (Linux)
         if: runner.os == 'Linux'
         run: |
           wget -q https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 21
-          sudo apt-get install -y clang-21 lld-21 libc++-21-dev libc++abi-21-dev
+          # SDL3-from-source needs the X11 + Wayland + GL/EGL development headers
+          # to build its video backends.
+          sudo apt-get install -y \
+            clang-21 lld-21 libc++-21-dev libc++abi-21-dev \
+            libgl1-mesa-dev libegl1-mesa-dev libx11-dev libxext-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libxi-dev libxfixes-dev \
+            libwayland-dev wayland-protocols libxkbcommon-dev
 
       - name: Set up MSVC developer environment (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      # --- macOS: build + package the runnable demos --------------------------
-      - name: Build demos (macOS, Release)
+      # --- build the demos, static deps, Release --------------------------------
+      - name: Build demos (macOS)
         if: runner.os == 'macOS'
         run: |
-          cmake --preset macos -DCMAKE_BUILD_TYPE=Release
+          cmake --preset macos -DCMAKE_BUILD_TYPE=Release -DPHYSICS_STATIC_DEPS=ON
           cmake --build --preset macos
 
-      - name: Package demos (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          out=physics-demo-macos-arm64
-          mkdir -p dist "stage/$out"
-          for demo in sandbox ballpit cradle explosion car fireworks shooter corridor; do
-            cp "build/$demo" "stage/$out/"
-          done
-          cp README.md "stage/$out/"
-          cat > "stage/$out/RUNNING.txt" <<'EOF'
-          Physics Demo — macOS demo binaries.
-          Each demo runs on either backend: ./sandbox --backend metal|gl
-          Runtime deps (dynamically linked): SDL3 and the Homebrew LLVM libc++ runtime.
-            brew install sdl3 llvm
-          EOF
-          tar -czf "dist/$out.tar.gz" -C stage "$out"
-
-      - name: Upload demos artifact (macOS)
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v7
-        with:
-          name: physics-demo-macos-arm64.tar.gz
-          path: dist/physics-demo-macos-arm64.tar.gz
-
-      # --- Linux: build the portable core (Release), package the engine bundle -
-      - name: Build core (Linux, Release)
+      - name: Build demos (Linux)
         if: runner.os == 'Linux'
         env:
           CC: clang-21
@@ -103,54 +82,64 @@ jobs:
             [ -f "$abs" ] && { json="$cand"; break; }
           done
           test -n "$json"
-          cmake --preset linux -DCMAKE_CXX_STDLIB_MODULES_JSON="$json" -DCMAKE_BUILD_TYPE=Release
+          # The `linux` preset defaults PHYSICS_BUILD_APPS=OFF (headless CI); the
+          # release overrides it ON to build the runnable demos.
+          cmake --preset linux -DCMAKE_CXX_STDLIB_MODULES_JSON="$json" \
+            -DCMAKE_BUILD_TYPE=Release -DPHYSICS_BUILD_APPS=ON -DPHYSICS_STATIC_DEPS=ON
           cmake --build --preset linux
 
-      - name: Package engine bundle (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          mkdir -p dist stage/physics-engine
-          cp -R src/PhysicsEngine src/Simulation stage/physics-engine/
-          cp packaging/engine/CMakeLists.txt packaging/engine/README.md stage/physics-engine/
-          cp docs/UsingTheEngine.md stage/physics-engine/
-          tar -czf dist/physics-engine-src.tar.gz -C stage physics-engine
-
-      - name: Upload engine bundle (Linux)
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v7
-        with:
-          name: physics-engine-src.tar.gz
-          path: dist/physics-engine-src.tar.gz
-
-      # --- Windows: build the portable core (Release, MSVC), package the bundle -
-      - name: Build core (Windows, Release)
+      - name: Build demos (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          cmake --preset windows -DCMAKE_BUILD_TYPE=Release
+          cmake --preset windows -DCMAKE_BUILD_TYPE=Release -DPHYSICS_BUILD_APPS=ON -DPHYSICS_STATIC_DEPS=ON
           cmake --build --preset windows
 
-      - name: Package engine bundle (Windows)
+      # --- package the runnable demos -------------------------------------------
+      - name: Package demos (macOS/Linux)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          stem="${{ matrix.archive }}"; stem="${stem%.tar.gz}"
+          mkdir -p dist "stage/$stem"
+          for demo in sandbox ballpit cradle explosion car fireworks shooter corridor; do
+            cp "build/$demo" "stage/$stem/"
+          done
+          cp README.md "stage/$stem/"
+          cat > "stage/$stem/RUNNING.txt" <<'EOF'
+          Physics Demo — self-contained demo binaries (SDL3 linked statically).
+          Run any demo:  ./sandbox            (pick a backend with --backend metal|gl)
+          Controls:      Esc quit · P pause · R reset (per-demo keys in README.md)
+          Runtime deps:  system OpenGL (and Metal on macOS) + the LLVM libc++ runtime.
+          EOF
+          tar -czf "dist/${{ matrix.archive }}" -C stage "$stem"
+
+      - name: Package demos (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path dist, stage/physics-engine | Out-Null
-          Copy-Item -Recurse src/PhysicsEngine, src/Simulation stage/physics-engine/
-          Copy-Item packaging/engine/CMakeLists.txt, packaging/engine/README.md stage/physics-engine/
-          Copy-Item docs/UsingTheEngine.md stage/physics-engine/
-          Compress-Archive -Path stage/physics-engine -DestinationPath dist/physics-engine-src-windows.zip -Force
+          $stem = "${{ matrix.archive }}" -replace '\.zip$',''
+          New-Item -ItemType Directory -Force -Path dist, "stage/$stem" | Out-Null
+          foreach ($demo in 'sandbox','ballpit','cradle','explosion','car','fireworks','shooter','corridor') {
+            Copy-Item "build/$demo.exe" "stage/$stem/"
+          }
+          Copy-Item README.md "stage/$stem/"
+          @"
+          Physics Demo — self-contained demo binaries (SDL3 + zlib linked statically).
+          Run any demo:  sandbox.exe          (pick a backend with --backend gl)
+          Controls:      Esc quit - P pause - R reset (per-demo keys in README.md)
+          Runtime deps:  system OpenGL (opengl32) + the MSVC runtime.
+          "@ | Set-Content "stage/$stem/RUNNING.txt"
+          Compress-Archive -Path "stage/$stem" -DestinationPath "dist/${{ matrix.archive }}" -Force
 
-      - name: Upload engine bundle (Windows)
-        if: runner.os == 'Windows'
+      - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: physics-engine-src-windows.zip
-          path: dist/physics-engine-src-windows.zip
+          name: ${{ matrix.archive }}
+          path: dist/${{ matrix.archive }}
 
-      # --- attach every platform's artifact to the published release ----------
       - name: Attach to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v3
         with:
-          files: dist/*
+          files: dist/${{ matrix.archive }}

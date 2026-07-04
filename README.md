@@ -154,8 +154,8 @@ implementations selected at runtime by `--backend metal|gl`:
 
 | | **Metal** (`MetalRenderer`) | **OpenGL** (`GLRenderer`) |
 | --- | --- | --- |
-| Role | the reference (default on macOS) | portability / parity |
-| API | metal-cpp (Apple's C++ bindings) | core OpenGL 4.1 |
+| Role | the reference (default on macOS) | portability — **macOS · Linux · Windows** |
+| API | metal-cpp (Apple's C++ bindings) | core OpenGL 4.1, loaded via **GLAD** |
 | Draws | one **instanced** draw per shape kind | one draw per object |
 | Binding | metal-cpp confined to a plain (non-module) lib | GL headers confined to a plain lib |
 
@@ -166,6 +166,11 @@ plain (non-module) libraries, so a GPU header never meets `import std`. `SceneVi
 converts `Physics::Vec3`/`Mat3` to the renderer's plain `Render::` types at the
 boundary, so a demo's draw code is backend-agnostic. Full details in
 [docs/Architecture.md](docs/Architecture.md#6-rendering-two-backends-behind-one-interface).
+
+The OpenGL backend loads its 4.1-core entry points through a **vendored GLAD
+loader** (`third_party/glad/`, gl core 4.1) on *every* platform — including macOS
+— via `SDL_GL_GetProcAddress`. Using one loader everywhere means the exact GL code
+path that ships on Linux/Windows is the one exercised (and CI-tested) on macOS.
 
 ## Building & running
 
@@ -241,9 +246,9 @@ Four CI workflows run on every push / PR, plus a release workflow:
 | --- | --- |
 | **macOS** | Homebrew LLVM + SDL3; configures the `macos` preset, builds **every demo + the Metal backend**, builds and runs all tests. |
 | **Linux** | LLVM 21 + libc++; builds and tests the **portable, rendering-free core** (`PHYSICS_BUILD_APPS=OFF`) — no SDL/GPU/display needed. |
-| **Windows** | MSVC (C++23 + `import std`); builds and tests the **portable core** (`PHYSICS_BUILD_APPS=OFF`). The windowed demos are macOS-only (the GL backend has no loader; Metal is Apple-only), so Windows validates the engine on a very different compiler. |
+| **Windows** | MSVC (C++23 + `import std`); a fast per-push check that the **portable core** (`PHYSICS_BUILD_APPS=OFF`) compiles + tests on a very different compiler. The demos build on Windows too (via GLAD) — they're produced by the **Release** workflow, not on every push. |
 | **Format** | `clang-format --dry-run --Werror` over all `*.cpp` / `*.cppm` / `*.hpp` (LLVM style, 100 cols). |
-| **Release** | On a published release (or manual dispatch): macOS builds + packages the **runnable demos** (Release, Metal + GL); Linux & Windows build the core in Release and ship the **portable engine as a drop-in source bundle** (`packaging/engine/`). Artifacts are attached to the release. |
+| **Release** | On a published release (or manual dispatch): **all three platforms** build the demos with `PHYSICS_STATIC_DEPS=ON` (SDL3 — and zlib on Windows — linked statically) and package the runnable executables (`.tar.gz` on macOS/Linux, `.zip` on Windows), attached to the release. macOS also ships the Metal backend. |
 
 `dependabot` keeps the actions up to date. `.clang-tidy` (analyzer / bugprone /
 performance / modernize) is provided for standalone runs against a compile

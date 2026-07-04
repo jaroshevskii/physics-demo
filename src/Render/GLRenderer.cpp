@@ -1,11 +1,13 @@
 // OpenGL backend. GL + SDL headers are confined to this translation unit's
 // global module fragment; the rest of the project only sees GLRenderer.hpp.
+//
+// Function loading goes through GLAD (vendored, gl core 4.1) on EVERY platform,
+// resolved from SDL's GL context via SDL_GL_GetProcAddress. Using one loader
+// everywhere (including macOS) means the exact code path that ships on
+// Linux/Windows is the one exercised on macOS — no per-platform GL divergence.
 #define GL_SILENCE_DEPRECATION
-#if defined(__APPLE__)
-#include <OpenGL/gl3.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <glad/gl.h>
+
 #include <SDL3/SDL.h>
 
 #include "GLRenderer.hpp"
@@ -212,6 +214,13 @@ bool GLRenderer::init(void *sdlWindow) {
     return false;
   }
   SDL_GL_MakeCurrent(impl_->window, impl_->context);
+
+  // Load the GL 4.1 core entry points for this context (all platforms).
+  if (!gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress))) {
+    std::fprintf(stderr, "gladLoadGL failed: could not load OpenGL 4.1 functions\n");
+    return false;
+  }
+
   SDL_GL_SetSwapInterval(1);
 
   impl_->meshProgram = linkProgram(kMeshVertexShader, kMeshFragmentShader);
