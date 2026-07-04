@@ -1,5 +1,11 @@
 # Physics Demo — teaching modern C++ + game-physics architecture
 
+[![macOS](https://github.com/jaroshevskii/physics-demo/actions/workflows/macos.yml/badge.svg)](https://github.com/jaroshevskii/physics-demo/actions/workflows/macos.yml)
+[![Linux](https://github.com/jaroshevskii/physics-demo/actions/workflows/linux.yml/badge.svg)](https://github.com/jaroshevskii/physics-demo/actions/workflows/linux.yml)
+[![Windows](https://github.com/jaroshevskii/physics-demo/actions/workflows/windows.yml/badge.svg)](https://github.com/jaroshevskii/physics-demo/actions/workflows/windows.yml)
+[![Format](https://github.com/jaroshevskii/physics-demo/actions/workflows/format.yml/badge.svg)](https://github.com/jaroshevskii/physics-demo/actions/workflows/format.yml)
+[![Release](https://github.com/jaroshevskii/physics-demo/actions/workflows/release.yml/badge.svg)](https://github.com/jaroshevskii/physics-demo/actions/workflows/release.yml)
+
 A set of small 3D rigid-body demos built to teach **modern C++** and the
 **architecture of a real collision/physics engine**. The code deliberately
 separates a pure, deterministic, fully-tested physics core from app logic and
@@ -229,13 +235,15 @@ deterministically. (`tests/PerfBench.cpp` is a timing harness, not a ctest.)
 
 ## Continuous integration
 
-Three GitHub Actions workflows (`.github/workflows/`) run on every push / PR:
+Four CI workflows run on every push / PR, plus a release workflow:
 
 | Workflow | What it does |
 | --- | --- |
 | **macOS** | Homebrew LLVM + SDL3; configures the `macos` preset, builds **every demo + the Metal backend**, builds and runs all tests. |
 | **Linux** | LLVM 21 + libc++; builds and tests the **portable, rendering-free core** (`PHYSICS_BUILD_APPS=OFF`) — no SDL/GPU/display needed. |
+| **Windows** | MSVC (C++23 + `import std`); builds and tests the **portable core** (`PHYSICS_BUILD_APPS=OFF`). The windowed demos are macOS-only (the GL backend has no loader; Metal is Apple-only), so Windows validates the engine on a very different compiler. |
 | **Format** | `clang-format --dry-run --Werror` over all `*.cpp` / `*.cppm` / `*.hpp` (LLVM style, 100 cols). |
+| **Release** | On a published release (or manual dispatch): macOS builds + packages the **runnable demos** (Release, Metal + GL); Linux & Windows build the core in Release and ship the **portable engine as a drop-in source bundle** (`packaging/engine/`). Artifacts are attached to the release. |
 
 `dependabot` keeps the actions up to date. `.clang-tidy` (analyzer / bugprone /
 performance / modernize) is provided for standalone runs against a compile

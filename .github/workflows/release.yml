@@ -1,0 +1,156 @@
+name: Release
+
+# Builds optimized artifacts for each platform and attaches them to the GitHub
+# Release. The windowed demos only build on macOS (the OpenGL backend has no
+# GLAD/GLEW loader and Metal is Apple-only), so:
+#   * macOS   ships the runnable demo executables (Release, Metal + OpenGL);
+#   * Linux   builds the portable core (Release) and ships the reusable engine
+#             as a drop-in source bundle (tar.gz);
+#   * Windows builds the portable core (Release, MSVC) and ships the same engine
+#             bundle (zip).
+# Every platform produces an artifact, honest about what each can build.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macOS, runner: macos-latest }
+          - { name: Linux, runner: ubuntu-latest }
+          - { name: Windows, runner: windows-latest }
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install CMake + Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.2.3"
+          ninjaVersion: "latest"
+
+      # --- toolchains ---------------------------------------------------------
+      - name: Install LLVM + SDL3 (macOS)
+        if: runner.os == 'macOS'
+        run: brew install llvm sdl3
+
+      - name: Install LLVM + libc++ (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -q https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 21
+          sudo apt-get install -y clang-21 lld-21 libc++-21-dev libc++abi-21-dev
+
+      - name: Set up MSVC developer environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # --- macOS: build + package the runnable demos --------------------------
+      - name: Build demos (macOS, Release)
+        if: runner.os == 'macOS'
+        run: |
+          cmake --preset macos -DCMAKE_BUILD_TYPE=Release
+          cmake --build --preset macos
+
+      - name: Package demos (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          out=physics-demo-macos-arm64
+          mkdir -p dist "stage/$out"
+          for demo in sandbox ballpit cradle explosion car fireworks shooter corridor; do
+            cp "build/$demo" "stage/$out/"
+          done
+          cp README.md "stage/$out/"
+          cat > "stage/$out/RUNNING.txt" <<'EOF'
+          Physics Demo — macOS demo binaries.
+          Each demo runs on either backend: ./sandbox --backend metal|gl
+          Runtime deps (dynamically linked): SDL3 and the Homebrew LLVM libc++ runtime.
+            brew install sdl3 llvm
+          EOF
+          tar -czf "dist/$out.tar.gz" -C stage "$out"
+
+      - name: Upload demos artifact (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v7
+        with:
+          name: physics-demo-macos-arm64.tar.gz
+          path: dist/physics-demo-macos-arm64.tar.gz
+
+      # --- Linux: build the portable core (Release), package the engine bundle -
+      - name: Build core (Linux, Release)
+        if: runner.os == 'Linux'
+        env:
+          CC: clang-21
+          CXX: clang++-21
+        run: |
+          json=""
+          for cand in $(find /usr/lib/llvm-21 /usr/lib /usr/share -name libc++.modules.json 2>/dev/null); do
+            sp="$(python3 -c 'import json,sys; m=[x for x in json.load(open(sys.argv[1])).get("modules",[]) if x.get("logical-name")=="std"]; print(m[0]["source-path"] if m else "")' "$cand")"
+            [ -z "$sp" ] && continue
+            case "$sp" in /*) abs="$sp" ;; *) abs="$(dirname "$cand")/$sp" ;; esac
+            [ -f "$abs" ] && { json="$cand"; break; }
+          done
+          test -n "$json"
+          cmake --preset linux -DCMAKE_CXX_STDLIB_MODULES_JSON="$json" -DCMAKE_BUILD_TYPE=Release
+          cmake --build --preset linux
+
+      - name: Package engine bundle (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p dist stage/physics-engine
+          cp -R src/PhysicsEngine src/Simulation stage/physics-engine/
+          cp packaging/engine/CMakeLists.txt packaging/engine/README.md stage/physics-engine/
+          cp docs/UsingTheEngine.md stage/physics-engine/
+          tar -czf dist/physics-engine-src.tar.gz -C stage physics-engine
+
+      - name: Upload engine bundle (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: physics-engine-src.tar.gz
+          path: dist/physics-engine-src.tar.gz
+
+      # --- Windows: build the portable core (Release, MSVC), package the bundle -
+      - name: Build core (Windows, Release)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cmake --preset windows -DCMAKE_BUILD_TYPE=Release
+          cmake --build --preset windows
+
+      - name: Package engine bundle (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist, stage/physics-engine | Out-Null
+          Copy-Item -Recurse src/PhysicsEngine, src/Simulation stage/physics-engine/
+          Copy-Item packaging/engine/CMakeLists.txt, packaging/engine/README.md stage/physics-engine/
+          Copy-Item docs/UsingTheEngine.md stage/physics-engine/
+          Compress-Archive -Path stage/physics-engine -DestinationPath dist/physics-engine-src-windows.zip -Force
+
+      - name: Upload engine bundle (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: physics-engine-src-windows.zip
+          path: dist/physics-engine-src-windows.zip
+
+      # --- attach every platform's artifact to the published release ----------
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*

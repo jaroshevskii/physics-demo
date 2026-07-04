@@ -1,0 +1,44 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # `import std;` is gated behind a CMake-version-specific UUID, so pin CMake.
+      - name: Install CMake + Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.2.3"
+          ninjaVersion: "latest"
+
+      - name: Set up MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # The `windows` preset builds the portable, rendering-free core
+      # (PHYSICS_BUILD_APPS=OFF) on MSVC at C++23 + import std. The core has no
+      # external dependencies (pure std), so no vcpkg is needed. The windowed
+      # demos are macOS-only (the OpenGL backend has no GLAD/GLEW loader, and
+      # Metal is Apple-only), so Windows validates the engine + architecture +
+      # feature reducers and runs every test — the same scope as the Linux job.
+      - name: Configure / Build / Test
+        shell: cmd
+        run: |
+          cmake --preset windows
+          cmake --build --preset windows
+          cmake --build --preset tests-windows
+          ctest --preset windows

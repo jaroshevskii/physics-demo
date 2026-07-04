@@ -32,11 +32,23 @@
         "PHYSICS_BUILD_APPS": "OFF"
       }
     },
+    {
+      "name": "windows",
+      "displayName": "Windows — MSVC (portable core, headless)",
+      "description": "Builds and tests the portable core on MSVC (C++23 + import std). PHYSICS_BUILD_APPS=OFF: the windowed demos are macOS-only (the GL backend has no loader, Metal is Apple-only), so Windows builds the rendering-free engine. Run from a VS developer environment so cl/Ninja are on PATH.",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl",
+        "PHYSICS_BUILD_APPS": "OFF"
+      }
+    },
     { "name": "default", "inherits": "macos" }
   ],
   "buildPresets": [
     { "name": "macos", "configurePreset": "macos" },
     { "name": "linux", "configurePreset": "linux" },
+    { "name": "windows", "configurePreset": "windows" },
     { "name": "default", "configurePreset": "default" },
     {
       "name": "tests",
@@ -57,11 +69,22 @@
         "SimulationTests", "CorridorTests", "ShooterFeatureTests", "SandboxFeatureTests",
         "BallPitFeatureTests"
       ]
+    },
+    {
+      "name": "tests-windows",
+      "configurePreset": "windows",
+      "targets": [
+        "CollisionTests", "PhysicsEngineTests", "SolverUpgradeTests", "BroadphaseTests",
+        "EngineFeaturesTests", "SchedulerTests", "CradleFeatureTests", "DemoTests",
+        "SimulationTests", "CorridorTests", "ShooterFeatureTests", "SandboxFeatureTests",
+        "BallPitFeatureTests"
+      ]
     }
   ],
   "testPresets": [
     { "name": "macos", "configurePreset": "macos", "output": { "outputOnFailure": true } },
     { "name": "linux", "configurePreset": "linux", "output": { "outputOnFailure": true } },
+    { "name": "windows", "configurePreset": "windows", "output": { "outputOnFailure": true } },
     { "name": "default", "configurePreset": "default", "output": { "outputOnFailure": true } }
   ],
   "workflowPresets": [
