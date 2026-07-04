@@ -1,0 +1,65 @@
+name: Linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install CMake + Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.2.3"
+          ninjaVersion: "latest"
+
+      # The `linux` preset builds the portable, rendering-free core
+      # (PHYSICS_BUILD_APPS=OFF), so only the toolchain + libc++ are needed —
+      # no SDL, GPU, or display. That is the whole engine + architecture +
+      # feature reducers, and every test.
+      - name: Install LLVM + libc++
+        run: |
+          wget -q https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 21
+          sudo apt-get install -y clang-21 lld-21 libc++-21-dev libc++abi-21-dev
+
+      # ccache (content-hashed) caches object files across runs; CMake picks it
+      # up as the compiler launcher.
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux
+          variant: ccache
+
+      - name: Configure / Build / Test
+        env:
+          CC: clang-21
+          CXX: clang++-21
+        run: |
+          # Pick a libc++ module manifest whose std.cppm actually exists.
+          json=""
+          for cand in $(find /usr/lib/llvm-21 /usr/lib /usr/share -name libc++.modules.json 2>/dev/null); do
+            sp="$(python3 -c 'import json,sys; m=[x for x in json.load(open(sys.argv[1])).get("modules",[]) if x.get("logical-name")=="std"]; print(m[0]["source-path"] if m else "")' "$cand")"
+            [ -z "$sp" ] && continue
+            case "$sp" in /*) abs="$sp" ;; *) abs="$(dirname "$cand")/$sp" ;; esac
+            [ -f "$abs" ] && { json="$cand"; break; }
+          done
+          echo "Using modules.json: ${json:-<none found>}"
+          test -n "$json"
+          cmake --preset linux -DCMAKE_CXX_STDLIB_MODULES_JSON="$json"
+          cmake --build --preset linux
+          cmake --build --preset tests-linux   # tests are EXCLUDE_FROM_ALL
+          ctest --preset linux

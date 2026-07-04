@@ -1,0 +1,13 @@
+build/
+CMakeUserPresets.json
+compile_commands.json
+.DS_Store
+*.o
+
+# Screenshot / recording scratch output
+scratchshots/
+
+# Xcode per-user state (the project + shared scheme are tracked)
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/

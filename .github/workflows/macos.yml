@@ -1,0 +1,41 @@
+name: macOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # `import std;` is gated behind a CMake-version-specific UUID, so pin CMake.
+      - name: Install CMake + Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.2.3"
+          ninjaVersion: "latest"
+
+      # Homebrew LLVM (Apple Clang supports neither modules nor `import std;`)
+      # and SDL3 for windowing. zlib ships in the SDK (linked as `z`); OpenGL,
+      # Metal, Foundation and QuartzCore are system frameworks; metal-cpp is
+      # fetched by CMake. This builds every demo app AND the Metal backend.
+      - name: Install LLVM + SDL3
+        run: brew install llvm sdl3
+
+      - name: Configure / Build / Test
+        run: |
+          cmake --preset macos
+          cmake --build --preset macos
+          cmake --build --preset tests   # tests are EXCLUDE_FROM_ALL
+          ctest --preset macos

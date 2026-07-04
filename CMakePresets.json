@@ -1,0 +1,77 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 4, "minor": 0, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "macos",
+      "displayName": "macOS — Homebrew LLVM (C++26 modules, import std)",
+      "description": "C++ modules and `import std;` require upstream LLVM; Apple Clang supports neither. Builds the demo apps + the Metal backend.",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm/bin/clang",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++",
+        "CMAKE_CXX_STDLIB_MODULES_JSON": "/opt/homebrew/opt/llvm/lib/c++/libc++.modules.json",
+        "CMAKE_PREFIX_PATH": "/opt/homebrew;/opt/homebrew/opt/sdl3",
+        "CMAKE_EXE_LINKER_FLAGS": "-L/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib"
+      }
+    },
+    {
+      "name": "linux",
+      "displayName": "Linux — LLVM/libc++ (portable core, headless)",
+      "description": "Builds and tests the portable, rendering-free core (engine + architecture + features). PHYSICS_BUILD_APPS=OFF so no SDL/GPU/display is needed — ideal for CI.",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-stdlib=libc++",
+        "CMAKE_EXE_LINKER_FLAGS": "-stdlib=libc++",
+        "PHYSICS_BUILD_APPS": "OFF"
+      }
+    },
+    { "name": "default", "inherits": "macos" }
+  ],
+  "buildPresets": [
+    { "name": "macos", "configurePreset": "macos" },
+    { "name": "linux", "configurePreset": "linux" },
+    { "name": "default", "configurePreset": "default" },
+    {
+      "name": "tests",
+      "configurePreset": "macos",
+      "targets": [
+        "CollisionTests", "PhysicsEngineTests", "SolverUpgradeTests", "BroadphaseTests",
+        "EngineFeaturesTests", "SchedulerTests", "CradleFeatureTests", "DemoTests",
+        "SimulationTests", "CorridorTests", "ShooterFeatureTests", "SandboxFeatureTests",
+        "BallPitFeatureTests"
+      ]
+    },
+    {
+      "name": "tests-linux",
+      "configurePreset": "linux",
+      "targets": [
+        "CollisionTests", "PhysicsEngineTests", "SolverUpgradeTests", "BroadphaseTests",
+        "EngineFeaturesTests", "SchedulerTests", "CradleFeatureTests", "DemoTests",
+        "SimulationTests", "CorridorTests", "ShooterFeatureTests", "SandboxFeatureTests",
+        "BallPitFeatureTests"
+      ]
+    }
+  ],
+  "testPresets": [
+    { "name": "macos", "configurePreset": "macos", "output": { "outputOnFailure": true } },
+    { "name": "linux", "configurePreset": "linux", "output": { "outputOnFailure": true } },
+    { "name": "default", "configurePreset": "default", "output": { "outputOnFailure": true } }
+  ],
+  "workflowPresets": [
+    {
+      "name": "test",
+      "steps": [
+        { "type": "configure", "name": "macos" },
+        { "type": "build", "name": "tests" },
+        { "type": "test", "name": "macos" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,361 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXFileReference section */
+		AA00000000000000000010 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		AA00000000000000000011 /* CMakePresets.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = CMakePresets.json; sourceTree = "<group>"; };
+		AA00000000000000000012 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA00000000000000000013 /* src */ = {isa = PBXFileReference; lastKnownFileType = folder; path = src; sourceTree = "<group>"; };
+		AA00000000000000000014 /* apps */ = {isa = PBXFileReference; lastKnownFileType = folder; path = apps; sourceTree = "<group>"; };
+		AA00000000000000000015 /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
+		AA00000000000000000016 /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		AA00000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				AA00000000000000000014 /* apps */,
+				AA00000000000000000013 /* src */,
+				AA00000000000000000015 /* tests */,
+				AA00000000000000000010 /* CMakeLists.txt */,
+				AA00000000000000000011 /* CMakePresets.json */,
+				AA00000000000000000016 /* scripts */,
+				AA00000000000000000012 /* README.md */,
+				AA00000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AA00000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		AA00000000000000000004 /* sandbox */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) sandbox";
+			buildConfigurationList = AA00000000000000000006 /* Build configuration list for PBXLegacyTarget "sandbox" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = sandbox;
+			passBuildSettingsInEnvironment = 1;
+			productName = sandbox;
+		};
+		AA00000000000000000024 /* ballpit */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) ballpit";
+			buildConfigurationList = AA00000000000000000026 /* Build configuration list for PBXLegacyTarget "ballpit" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = ballpit;
+			passBuildSettingsInEnvironment = 1;
+			productName = ballpit;
+		};
+		AA00000000000000000034 /* cradle */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) cradle";
+			buildConfigurationList = AA00000000000000000036 /* Build configuration list for PBXLegacyTarget "cradle" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = cradle;
+			passBuildSettingsInEnvironment = 1;
+			productName = cradle;
+		};
+		AA00000000000000000044 /* explosion */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) explosion";
+			buildConfigurationList = AA00000000000000000046 /* Build configuration list for PBXLegacyTarget "explosion" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = explosion;
+			passBuildSettingsInEnvironment = 1;
+			productName = explosion;
+		};
+		AA00000000000000000054 /* car */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) car";
+			buildConfigurationList = AA00000000000000000056 /* Build configuration list for PBXLegacyTarget "car" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = car;
+			passBuildSettingsInEnvironment = 1;
+			productName = car;
+		};
+		AA00000000000000000064 /* fireworks */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) fireworks";
+			buildConfigurationList = AA00000000000000000066 /* Build configuration list for PBXLegacyTarget "fireworks" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = fireworks;
+			passBuildSettingsInEnvironment = 1;
+			productName = fireworks;
+		};
+		AA00000000000000000074 /* corridor */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) corridor";
+			buildConfigurationList = AA00000000000000000076 /* Build configuration list for PBXLegacyTarget "corridor" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = corridor;
+			passBuildSettingsInEnvironment = 1;
+			productName = corridor;
+		};
+		AA00000000000000000084 /* shooter */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) shooter";
+			buildConfigurationList = AA00000000000000000086 /* Build configuration list for PBXLegacyTarget "shooter" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/scripts/xcode-build.sh";
+			buildWorkingDirectory = "$(SRCROOT)";
+			dependencies = (
+			);
+			name = shooter;
+			passBuildSettingsInEnvironment = 1;
+			productName = shooter;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		AA00000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = AA00000000000000000005 /* Build configuration list for PBXProject "PhysicsDemo" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AA00000000000000000002;
+			productRefGroup = AA00000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA00000000000000000004 /* sandbox */,
+				AA00000000000000000024 /* ballpit */,
+				AA00000000000000000034 /* cradle */,
+				AA00000000000000000044 /* explosion */,
+				AA00000000000000000054 /* car */,
+				AA00000000000000000064 /* fireworks */,
+				AA00000000000000000074 /* corridor */,
+				AA00000000000000000084 /* shooter */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		AA00000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ONLY_ACTIVE_ARCH = YES;
+			};
+			name = Debug;
+		};
+		AA00000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		AA00000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AA00000000000000000029 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AA0000000000000000002A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AA00000000000000000039 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Debug;
+		};
+		AA0000000000000000003A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Release;
+		};
+		AA00000000000000000049 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Debug;
+		};
+		AA0000000000000000004A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Release;
+		};
+		AA00000000000000000059 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Debug;
+		};
+		AA0000000000000000005A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Release;
+		};
+		AA00000000000000000069 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Debug;
+		};
+		AA0000000000000000006A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Release;
+		};
+		AA00000000000000000079 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Debug;
+		};
+		AA0000000000000000007A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Release;
+		};
+		AA00000000000000000089 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Debug;
+		};
+		AA0000000000000000008A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; };
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA00000000000000000005 /* Build configuration list for PBXProject "PhysicsDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000000000000000007 /* Debug */,
+				AA00000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000006 /* Build configuration list for PBXLegacyTarget "sandbox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000000000000000009 /* Debug */,
+				AA0000000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000026 /* Build configuration list for PBXLegacyTarget "ballpit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000000000000000029 /* Debug */,
+				AA0000000000000000002A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000036 /* Build configuration list for PBXLegacyTarget "cradle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( AA00000000000000000039 /* Debug */, AA0000000000000000003A /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000046 /* Build configuration list for PBXLegacyTarget "explosion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( AA00000000000000000049 /* Debug */, AA0000000000000000004A /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000056 /* Build configuration list for PBXLegacyTarget "car" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( AA00000000000000000059 /* Debug */, AA0000000000000000005A /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000066 /* Build configuration list for PBXLegacyTarget "fireworks" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( AA00000000000000000069 /* Debug */, AA0000000000000000006A /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000076 /* Build configuration list for PBXLegacyTarget "corridor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( AA00000000000000000079 /* Debug */, AA0000000000000000007A /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA00000000000000000086 /* Build configuration list for PBXLegacyTarget "shooter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( AA00000000000000000089 /* Debug */, AA0000000000000000008A /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AA00000000000000000001 /* Project object */;
+}
